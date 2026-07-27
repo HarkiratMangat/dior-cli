@@ -1,0 +1,11 @@
+# Editor / OS noise
+.DS_Store
+*.swp
+*~
+
+# Anything local-only or machine-specific belongs here, never tracked --
+# this repo is deliberately free of secrets, tokens and paths that differ
+# per machine (DIOR_BOT_DIR in core.zsh is the single exception, and it is
+# a plain filesystem path, not a credential).
+local.zsh
+*.local.zsh
