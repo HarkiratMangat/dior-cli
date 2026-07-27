@@ -67,14 +67,14 @@ _dior_print_menu() {
     # what looked broken here before.
     echo ""
     if [ -z "$filter" ]; then
-        echo "💡 NEED HELP?"
-        echo "  Add ${DIOR_C_CMD}--help${DIOR_C_RESET} or ${DIOR_C_CMD}-h${DIOR_C_RESET} to any command for its full guide ${DIOR_C_DIM}(e.g. ${DIOR_C_RESET}${DIOR_C_CMD}dior bot dev --help${DIOR_C_RESET}${DIOR_C_DIM})${DIOR_C_RESET}"
-        echo "  Or narrow this whole list with ${DIOR_C_CMD}dior help bot${DIOR_C_RESET}"
+        echo "${DIOR_C_HELP}💡 NEED HELP?${DIOR_C_RESET}"
+        echo "  ${DIOR_C_HELP}Add${DIOR_C_RESET} ${DIOR_C_CMD}--help${DIOR_C_RESET} ${DIOR_C_HELP}or${DIOR_C_RESET} ${DIOR_C_CMD}-h${DIOR_C_RESET} ${DIOR_C_HELP}to any command for its full guide${DIOR_C_RESET} ${DIOR_C_DIM}(e.g. ${DIOR_C_RESET}${DIOR_C_CMD}dior bot dev --help${DIOR_C_RESET}${DIOR_C_DIM})${DIOR_C_RESET}"
+        echo "  ${DIOR_C_HELP}Or narrow this whole list with${DIOR_C_RESET} ${DIOR_C_CMD}dior help bot${DIOR_C_RESET}"
         echo ""
         echo "  ${DIOR_C_DIM}Options come in two shapes, and the shape tells you whether they combine:${DIOR_C_RESET}"
         echo "  ${DIOR_C_DIM}a bare word is a MODE (pick one), a ${DIOR_C_RESET}${DIOR_C_OPT}--flag${DIOR_C_RESET}${DIOR_C_DIM} stacks with anything else${DIOR_C_RESET}"
     else
-        echo "💡 Add ${DIOR_C_CMD}--help${DIOR_C_RESET}/${DIOR_C_CMD}-h${DIOR_C_RESET} to any command above for its full guide ${DIOR_C_DIM}(e.g. ${DIOR_C_RESET}${DIOR_C_CMD}dior $filter <name> --help${DIOR_C_RESET}${DIOR_C_DIM})${DIOR_C_RESET}"
+        echo "${DIOR_C_HELP}💡 Add${DIOR_C_RESET} ${DIOR_C_CMD}--help${DIOR_C_RESET}/${DIOR_C_CMD}-h${DIOR_C_RESET} ${DIOR_C_HELP}to any command above for its full guide${DIOR_C_RESET} ${DIOR_C_DIM}(e.g. ${DIOR_C_RESET}${DIOR_C_CMD}dior $filter <name> --help${DIOR_C_RESET}${DIOR_C_DIM})${DIOR_C_RESET}"
     fi
     echo "${DIOR_C_FOOT}========================================================${DIOR_C_RESET}"
 }
@@ -131,9 +131,9 @@ _dior_suggest() {
             [ "${k%% *}" = "$group" ] && matches+=("${k#* }")
         done
         if [ -n "$name" ]; then
-            echo "${DIOR_C_WARN}⚠️  '$group $name' isn't a command${DIOR_C_RESET}"
+            echo "${DIOR_C_ERROR}⚠️  '$group $name' isn't a command${DIOR_C_RESET}"
         else
-            echo "${DIOR_C_WARN}⚠️  '$group' needs a subcommand${DIOR_C_RESET}"
+            echo "${DIOR_C_ERROR}⚠️  '$group' needs a subcommand${DIOR_C_RESET}"
         fi
         echo "   Valid '$group' subcommands: ${DIOR_C_CMD}${matches[*]}${DIOR_C_RESET}"
         return 0
@@ -147,15 +147,15 @@ _dior_suggest() {
             [ "${k#* }" = "$group" ] && matches+=("$k")
         done
         if [ ${#matches} -eq 1 ]; then
-            echo "${DIOR_C_WARN}⚠️  '$group' isn't a command by itself${DIOR_C_RESET} — did you mean ${DIOR_C_CMD}'dior ${matches[1]}'${DIOR_C_RESET}?"
+            echo "${DIOR_C_ERROR}⚠️  '$group' isn't a command by itself${DIOR_C_RESET} — did you mean ${DIOR_C_CMD}'dior ${matches[1]}'${DIOR_C_RESET}?"
             return 0
         elif [ ${#matches} -gt 1 ]; then
-            echo "${DIOR_C_WARN}⚠️  '$group' is ambiguous${DIOR_C_RESET} — it matches: ${DIOR_C_CMD}${matches[*]}${DIOR_C_RESET}"
+            echo "${DIOR_C_ERROR}⚠️  '$group' is ambiguous${DIOR_C_RESET} — it matches: ${DIOR_C_CMD}${matches[*]}${DIOR_C_RESET}"
             return 0
         fi
     fi
 
-    echo "${DIOR_C_WARN}⚠️  '$group${name:+ }$name' isn't a recognized dior command${DIOR_C_RESET}"
+    echo "${DIOR_C_ERROR}⚠️  '$group${name:+ }$name' isn't a recognized dior command${DIOR_C_RESET}"
     return 1
 }
 
