@@ -13,9 +13,13 @@
 # ==============================================================================
 
 # Prints the command menu. With no argument: everything, grouped. With a group
-# name ("bot" or "update"): just that group's commands -- this is what makes
-# `dior help bot` / `dior bot --help` a scoped listing instead of the full wall
-# of text.
+# name ("bot"): just that group's commands -- this is what makes `dior help bot`
+# / `dior bot --help` a scoped listing instead of the full wall of text.
+#
+# Note there is no "update" filter case anymore: `update` became a single
+# command with sub-options rather than a group of six commands, so
+# `dior help update` now resolves to its GUIDE (via _dior_show_help) and never
+# reaches this function.
 _dior_print_menu() {
     local filter="$1"
     local key group lastgroup="" padded
@@ -24,25 +28,21 @@ _dior_print_menu() {
     if [ -z "$filter" ]; then
         echo "${DIOR_C_TITLE}👑 DIOR TERMINAL CLI HUB${DIOR_C_RESET}"
         echo "${DIOR_C_TITLE}========================================================${DIOR_C_RESET}"
-        echo "Usage: dior <group> <command> [args]"
-    elif [ "$filter" = "bot" ]; then
-        echo "${DIOR_C_TITLE}🤖 BOT COMMANDS${DIOR_C_RESET}"
-        echo "${DIOR_C_TITLE}========================================================${DIOR_C_RESET}"
+        echo "Usage: dior <group> <command> ${DIOR_C_OPT}[mode] [--flags]${DIOR_C_RESET}"
     else
-        echo "${DIOR_C_TITLE}🧹 MAINTENANCE COMMANDS${DIOR_C_RESET}"
+        echo "${DIOR_C_TITLE}🤖 BOT COMMANDS${DIOR_C_RESET}"
         echo "${DIOR_C_TITLE}========================================================${DIOR_C_RESET}"
     fi
     echo ""
 
     # Walks DIOR_MENU_ORDER (hand-curated, workflow-grouped) rather than sorting
     # DIOR_HELP_SUMMARY's keys -- that's the fix for commands that belong
-    # together (bot status / bot logs / bot peaks) landing next to each other
-    # instead of wherever the alphabet put them. A group header prints once per
-    # group (when unfiltered); DIOR_MENU_BREAK_AFTER adds a blank line after
-    # specific keys to separate sub-clusters within a group. Padding is computed
-    # on the PLAIN key first, then wrapped in color -- coloring inside a printf
-    # width field throws off alignment, since the invisible escape bytes count
-    # toward the field width.
+    # together landing next to each other instead of wherever the alphabet put
+    # them. A group header prints once per group (when unfiltered);
+    # DIOR_MENU_BREAK_AFTER adds a blank line after specific keys to separate
+    # clusters. Padding is computed on the PLAIN key first, then wrapped in
+    # color -- coloring inside a printf width field throws off alignment, since
+    # the invisible escape bytes count toward the field width.
     for key in "${DIOR_MENU_ORDER[@]}"; do
         group="${key%% *}"
         [ -n "$filter" ] && [ "$group" != "$filter" ] && continue
@@ -55,7 +55,7 @@ _dior_print_menu() {
             fi
             lastgroup="$group"
         fi
-        padded=$(printf "%-15s" "$key")
+        padded=$(printf "%-11s" "$key")
         printf "  ${DIOR_C_CMD}%s${DIOR_C_RESET} ${DIOR_C_DIM}->${DIOR_C_RESET} %s\n" "$padded" "$DIOR_HELP_SUMMARY[$key]"
         [ -n "${DIOR_MENU_BREAK_AFTER[$key]}" ] && echo ""
     done
@@ -64,26 +64,33 @@ _dior_print_menu() {
     # is usage instruction, not a command reference, and forcing it into the
     # same column-aligned shape as the list above (at a totally different,
     # much wider column width, since these labels are much longer) is exactly
-    # what looked broken here before. Command examples stay colored so they're
-    # still easy to spot, just not pretending to be rows in the table above.
+    # what looked broken here before.
     echo ""
     if [ -z "$filter" ]; then
         echo "💡 NEED HELP?"
-        echo "  Add ${DIOR_C_CMD}--help${DIOR_C_RESET} or ${DIOR_C_CMD}-h${DIOR_C_RESET} to any command for its full guide ${DIOR_C_DIM}(e.g. ${DIOR_C_RESET}${DIOR_C_CMD}dior bot dev --help${DIOR_C_RESET}${DIOR_C_DIM})${DIOR_C_RESET}."
-        echo "  Or narrow this whole list with ${DIOR_C_CMD}dior help <group>${DIOR_C_RESET} ${DIOR_C_DIM}(e.g. ${DIOR_C_RESET}${DIOR_C_CMD}dior help bot${DIOR_C_RESET}${DIOR_C_DIM})${DIOR_C_RESET}."
+        echo "  Add ${DIOR_C_CMD}--help${DIOR_C_RESET} or ${DIOR_C_CMD}-h${DIOR_C_RESET} to any command for its full guide ${DIOR_C_DIM}(e.g. ${DIOR_C_RESET}${DIOR_C_CMD}dior bot dev --help${DIOR_C_RESET}${DIOR_C_DIM})${DIOR_C_RESET}"
+        echo "  Or narrow this whole list with ${DIOR_C_CMD}dior help bot${DIOR_C_RESET}"
+        echo ""
+        echo "  ${DIOR_C_DIM}Options come in two shapes, and the shape tells you whether they combine:${DIOR_C_RESET}"
+        echo "  ${DIOR_C_DIM}a bare word is a MODE (pick one), a ${DIOR_C_RESET}${DIOR_C_OPT}--flag${DIOR_C_RESET}${DIOR_C_DIM} stacks with anything else${DIOR_C_RESET}"
     else
-        echo "💡 Add ${DIOR_C_CMD}--help${DIOR_C_RESET}/${DIOR_C_CMD}-h${DIOR_C_RESET} to any command above for its full guide ${DIOR_C_DIM}(e.g. ${DIOR_C_RESET}${DIOR_C_CMD}dior $filter <name> --help${DIOR_C_RESET}${DIOR_C_DIM})${DIOR_C_RESET}."
+        echo "💡 Add ${DIOR_C_CMD}--help${DIOR_C_RESET}/${DIOR_C_CMD}-h${DIOR_C_RESET} to any command above for its full guide ${DIOR_C_DIM}(e.g. ${DIOR_C_RESET}${DIOR_C_CMD}dior $filter <name> --help${DIOR_C_RESET}${DIOR_C_DIM})${DIOR_C_RESET}"
     fi
     echo "${DIOR_C_FOOT}========================================================${DIOR_C_RESET}"
 }
 
 _dior_show_help() {
-    local group="$1" name="$2" key="$1 $2"
-    if [ -n "$name" ] && [ -n "${DIOR_HELP_DETAIL[$key]}" ]; then
+    local group="$1" name="$2"
+    # Key is built WITHOUT a trailing space when there's no $2 -- `dior help
+    # update` must look up "update", not "update ". Single-word commands own a
+    # guide now, so this is load-bearing rather than cosmetic.
+    local key="$1${2:+ $2}"
+
+    if [ -n "${DIOR_HELP_DETAIL[$key]}" ]; then
         echo "${DIOR_HELP_DETAIL[$key]}"
         return
     fi
-    if { [ "$group" = "bot" ] || [ "$group" = "update" ]; } && [ -z "$name" ]; then
+    if [ "$group" = "bot" ] && [ -z "$name" ]; then
         # Group given, no specific command -- show that group's own mini-menu
         # instead of either the full wall-of-everything or a vague nudge.
         _dior_print_menu "$group"
@@ -108,18 +115,27 @@ _dior_suggest() {
     local group="$1" name="$2"
     local k matches=()
 
-    if [ "$group" = "bot" ] || [ "$group" = "update" ]; then
-        # Right group, but the subcommand doesn't exist (missing or misspelled).
-        # Walks DIOR_MENU_ORDER (not a raw key sort) so this list reads in the
-        # same workflow order as the menu, not alphabetically.
+    # Case 1: a single-word COMMAND that takes sub-options (e.g. `dior update
+    # nope`). Not a group -- so the useful answer is its option list, not a
+    # list of commands.
+    if [ -n "${DIOR_SUBOPTS[$group]}" ] && [ -z "${DIOR_SUBOPTS[$group $name]}" ]; then
+        _dior_bad_opt "$group" "$name"
+        return 0
+    fi
+
+    # Case 2: right group, but the subcommand doesn't exist (missing or
+    # misspelled). Walks DIOR_MENU_ORDER (not a raw key sort) so this list reads
+    # in the same workflow order as the menu, not alphabetically.
+    if [ "$group" = "bot" ]; then
         for k in "${DIOR_MENU_ORDER[@]}"; do
             [ "${k%% *}" = "$group" ] && matches+=("${k#* }")
         done
         if [ -n "$name" ]; then
-            echo "${DIOR_C_WARN}⚠️  '$group $name' isn't a command.${DIOR_C_RESET} Valid '$group' subcommands: ${DIOR_C_CMD}${matches[*]}${DIOR_C_RESET}"
+            echo "${DIOR_C_WARN}⚠️  '$group $name' isn't a command${DIOR_C_RESET}"
         else
-            echo "${DIOR_C_WARN}⚠️  '$group' needs a subcommand.${DIOR_C_RESET} Valid '$group' subcommands: ${DIOR_C_CMD}${matches[*]}${DIOR_C_RESET}"
+            echo "${DIOR_C_WARN}⚠️  '$group' needs a subcommand${DIOR_C_RESET}"
         fi
+        echo "   Valid '$group' subcommands: ${DIOR_C_CMD}${matches[*]}${DIOR_C_RESET}"
         return 0
     fi
 
@@ -139,43 +155,53 @@ _dior_suggest() {
         fi
     fi
 
-    echo "${DIOR_C_WARN}⚠️  '$group${name:+ }$name' isn't a recognized dior command.${DIOR_C_RESET}"
+    echo "${DIOR_C_WARN}⚠️  '$group${name:+ }$name' isn't a recognized dior command${DIOR_C_RESET}"
     return 1
 }
 
-# Tab-completion for `dior`. Derives its candidate lists FROM DIOR_MENU_ORDER
-# (the same array driving the menu) rather than a separately hand-typed list --
-# add a command to DIOR_MENU_ORDER and it tab-completes for free, same as it
-# gets a menu entry for free. compinit (needed for compdef) is already set up
-# earlier in this file, in the UV & PYTHON TOOLING SETUP section.
+# Tab-completion for `dior`. Derives EVERY candidate list from the same two
+# arrays that drive the menu and the suggester (DIOR_MENU_ORDER, DIOR_SUBOPTS)
+# rather than a separately hand-typed list -- add a command or an option and it
+# tab-completes for free. compinit (needed for compdef) is set up in ~/.zshrc,
+# in the UV & PYTHON TOOLING SETUP section that runs before it sources dior.
 _dior() {
-    local -a bot_cmds update_cmds
-    local entry
+    local -a bot_cmds
+    local entry key
+
     for entry in "${DIOR_MENU_ORDER[@]}"; do
         case "$entry" in
             "bot "*) bot_cmds+=("${entry#bot }") ;;
-            "update "*) update_cmds+=("${entry#update }") ;;
         esac
     done
 
     if (( CURRENT == 2 )); then
         compadd bot update help
-    elif [ "${words[2]}" = "help" ]; then
+        return
+    fi
+
+    if [ "${words[2]}" = "help" ]; then
         if (( CURRENT == 3 )); then
             compadd bot update
-        elif (( CURRENT == 4 )); then
-            case "${words[3]}" in
-                bot) compadd -a bot_cmds ;;
-                update) compadd -a update_cmds ;;
-            esac
+        elif (( CURRENT == 4 )) && [ "${words[3]}" = "bot" ]; then
+            compadd -a bot_cmds
         fi
-    elif (( CURRENT == 3 )); then
-        case "${words[2]}" in
-            bot) compadd -a bot_cmds -- --help -h ;;
-            update) compadd -a update_cmds -- --help -h ;;
-        esac
-    elif (( CURRENT == 4 )) && [ "${words[2]}" = "bot" ] && [ "${words[3]}" = "dev" ]; then
-        compadd nowatch kill --help -h
+        return
+    fi
+
+    # `dior update <TAB>` -- a single-word command, so its options live at
+    # position 3, one earlier than the bot group's.
+    if [ "${words[2]}" = "update" ]; then
+        (( CURRENT == 3 )) && compadd ${=DIOR_SUBOPTS[update]} --help -h
+        return
+    fi
+
+    if [ "${words[2]}" = "bot" ]; then
+        if (( CURRENT == 3 )); then
+            compadd -a bot_cmds -- --help -h
+        elif (( CURRENT >= 4 )); then
+            key="bot ${words[3]}"
+            [ -n "${DIOR_SUBOPTS[$key]}" ] && compadd ${=DIOR_SUBOPTS[$key]} --help -h
+        fi
     fi
 }
 compdef _dior dior
