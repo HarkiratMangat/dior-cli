@@ -9,3 +9,8 @@
 # a plain filesystem path, not a credential).
 local.zsh
 *.local.zsh
+
+# Ephemeral working notes -- handoffs, plans, scratch. These describe intent for
+# work not yet done, so they are wrong the moment it ships; they must never enter
+# tracked history. Durable decisions belong in CLAUDE.md, code comments, or memory.
+local/
