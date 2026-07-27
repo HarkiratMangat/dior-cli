@@ -18,18 +18,37 @@ DIOR_BOT_DIR="/Applications/Claude Code/Diors-Builds"
 # later gets piped/redirected, the codes still print; for a personal interactive
 # tool that's an acceptable tradeoff against the complexity of re-deriving this
 # on every call just to handle that rare case.
+# 256-colour indices (\e[38;5;Nm) rather than the 16 system codes, deliberately:
+# the system colours are theme-DEFINED, so \e[94m rendered as an unreadably dark
+# blue on this terminal's profile. 256-colour indices are fixed RGB values and
+# look the same everywhere. Chosen 2026-07-27 with local/colorpick.zsh.
+#
+# TITLE and FOOT stay ONE hue at two weights, exactly as before -- the opening
+# divider and the guide title are the same colour on purpose, and the closing
+# divider is dimmed so the block reads as opening loud and trailing off. A
+# separate DIVIDER variable was tried and reverted 2026-07-27: title and bars
+# will always match, so splitting them added a variable that never diverges.
+#
+# WARN vs ERROR is the one genuine split, and it's about severity, not looks:
+#   ERROR -- what you typed isn't a thing (unknown command, unknown option)
+#   WARN  -- well-formed but refused (an invalid combination), or a caution
+#            inside a guide
+# These were ONE colour before, which made a plain typo and a deliberate safety
+# rail look identically alarming.
 if [[ -t 1 ]]; then
     DIOR_C_RESET=$'\e[0m'
-    DIOR_C_TITLE=$'\e[1;36m'   # bold cyan   -- opening divider + guide titles
-    DIOR_C_FOOT=$'\e[2;36m'    # dim cyan    -- CLOSING divider only
-    DIOR_C_HEAD=$'\e[1;35m'    # bold magenta -- section headers (USAGE:, etc.)
-    DIOR_C_CMD=$'\e[32m'       # green       -- command names, bullet markers
-    DIOR_C_ARG=$'\e[33m'       # yellow      -- <required> argument placeholders
-    DIOR_C_OPT=$'\e[94m'       # bright blue -- [optional] anything: modes, flags, args
-    DIOR_C_WARN=$'\e[1;33m'    # bold yellow -- every ⚠️ line, always
-    DIOR_C_DIM=$'\e[2m'        # dim         -- '->' separators, every parenthetical aside
+    DIOR_C_TITLE=$'\e[1;38;5;197m'   # bold pink    -- opening divider + guide titles
+    DIOR_C_FOOT=$'\e[2;38;5;197m'    # dim pink     -- CLOSING divider only
+    DIOR_C_HEAD=$'\e[1;38;5;141m'    # bold violet  -- section headers (USAGE:, etc.)
+    DIOR_C_CMD=$'\e[38;5;87m'        # light cyan   -- command names, bullet markers
+    DIOR_C_ARG=$'\e[38;5;49m'        # spring green -- <required> argument placeholders
+    DIOR_C_OPT=$'\e[38;5;183m'       # light orchid -- [optional] modes, flags, args
+    DIOR_C_HELP=$'\e[38;5;230m'      # cream        -- the 💡 usage tips
+    DIOR_C_WARN=$'\e[1;38;5;227m'    # bold yellow  -- refused combinations, guide cautions
+    DIOR_C_ERROR=$'\e[1;38;5;196m'   # bold red     -- unrecognized commands and options
+    DIOR_C_DIM=$'\e[2m'              # dim          -- '->' separators, parenthetical asides
 else
-    DIOR_C_RESET="" DIOR_C_TITLE="" DIOR_C_FOOT="" DIOR_C_HEAD="" DIOR_C_CMD="" DIOR_C_ARG="" DIOR_C_OPT="" DIOR_C_WARN="" DIOR_C_DIM=""
+    DIOR_C_RESET="" DIOR_C_TITLE="" DIOR_C_FOOT="" DIOR_C_HEAD="" DIOR_C_CMD="" DIOR_C_ARG="" DIOR_C_OPT="" DIOR_C_HELP="" DIOR_C_WARN="" DIOR_C_ERROR="" DIOR_C_DIM=""
 fi
 
 typeset -gA DIOR_HELP_SUMMARY   # key: "group name" (e.g. "bot commit") -> one-line menu blurb
@@ -109,7 +128,7 @@ _dior_confirm() {
 _dior_bad_opt() {
     local key="$1" bad="$2"
     if [ -n "$bad" ]; then
-        echo "${DIOR_C_WARN}⚠️  '$bad' isn't a valid option for 'dior $key'${DIOR_C_RESET}"
+        echo "${DIOR_C_ERROR}⚠️  '$bad' isn't a valid option for 'dior $key'${DIOR_C_RESET}"
     fi
     echo "   Valid options: ${DIOR_C_OPT}${DIOR_SUBOPTS[$key]}${DIOR_C_RESET}"
     echo "   Full guide:    ${DIOR_C_CMD}dior help $key${DIOR_C_RESET}"
