@@ -66,5 +66,9 @@ DIOR_CLI_DIR="${0:A:h}"
 # core.zsh first -- see LOAD ORDER above. The rest are independent of each other.
 source "$DIOR_CLI_DIR/core.zsh"
 source "$DIOR_CLI_DIR/help.zsh"
+# browse.zsh reads the manifest and calls _dior_print_menu, so it needs both of
+# the above -- but nothing needs IT, so it loads after them and before the
+# command files, which remain independent of each other.
+source "$DIOR_CLI_DIR/browse.zsh"
 source "$DIOR_CLI_DIR/bot.zsh"
 source "$DIOR_CLI_DIR/update.zsh"

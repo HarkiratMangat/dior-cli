@@ -66,9 +66,28 @@ Shell config fails silently and at a distance, so "it looks right" is not eviden
 - **Adding a command means three places, all in one change:** the `_dior_<group>_<name>` function, a
   `_dior_register` call, and a `DIOR_MENU_ORDER` entry (plus `DIOR_SUBOPTS` if it takes options).
   Miss `DIOR_MENU_ORDER` and it silently won't appear in the menu or tab-complete.
+  The browser needs no fourth edit — it derives modes and flags from `DIOR_SUBOPTS` by shape.
+  But if the new command *rejects* some combination of its own options, that rule has to be
+  mirrored into `browse.zsh`'s constraint tables, because the browser has to know it BEFORE the
+  command is built and the validator only knows it after. That duplication is deliberate and
+  documented at the top of `browse.zsh`; it's the one place these two surfaces can drift.
 - **zsh array subscripts:** always assign via a variable/positional (`arr[$var]=y`), never a literal
   quoted string (`arr["bot x"]=y`) — zsh stores the quote characters in the key and every later
   lookup silently misses. `_dior_register` exists so nothing else has to remember this.
+  The same rule covers *composite* subscripts: `arr[$a $b]=y` fails outright with
+  `bad pattern` because zsh pattern-matches an assignment subscript and the space breaks it.
+  Build the key into one variable first (`_dior_browse_vkey` exists for this). Reads tolerate
+  the inline form, writes do not — so use the variable for both, or the two drift.
+- **Never reference a variable in the same `local` statement that declares it.** zsh declares
+  every name in a `local`/`typeset` statement *before* assigning any of them, so
+  `local key="$1" out="dior $key"` sets `out` from the freshly-emptied local `key`, not from `$1`.
+  Bash evaluates left-to-right and does NOT do this, so the pattern looks correct and reviews
+  clean. Found 2026-07-27 12:30 EDT in three `browse.zsh` functions at once; the symptom was a
+  command line rendering as `dior ` with the command name missing.
+- **`local` with no value, run twice in one scope, ECHOES to stdout.** A bare `local f` inside a
+  loop prints `f=<previous value>` on every iteration after the first — which silently corrupts
+  any function that returns its result on stdout. Declare all locals once at the top of the
+  function; give them a value if they're in a loop.
 - **`local` outside a function doesn't scope** — it leaks a permanent global into every terminal.
   Wrap guide-building scratch variables in an anonymous function: `() { local X=...; ... }`.
 - **`printf "%-Ns"` padding counts the substituted argument's visible characters, not ANSI bytes in

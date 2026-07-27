@@ -123,9 +123,14 @@ _dior_bad_opt() {
 # 'bot' and 'vm') to a _dior_<group>_<name> function and calls it -- no case
 # list to keep updated by hand when a new command gets added.
 dior() {
-    # Bare `dior`, no args at all -- just show the menu, no need to feel wanted.
+    # Bare `dior`, no args at all -- launch the interactive browser (browse.zsh).
+    # Split from `dior help` on 2026-07-27 12:30 EDT: `dior help` stays a plain
+    # printed reference so it can still be piped, screenshotted, and diffed
+    # before/after a refactor, which is this repo's only real regression test.
+    # _dior_browse falls back to _dior_print_menu itself when stdout isn't a tty
+    # or the window is too short, so `dior | less` still does the sane thing.
     if [ -z "$1" ]; then
-        dior help
+        _dior_browse
         return
     fi
 
