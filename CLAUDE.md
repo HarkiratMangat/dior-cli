@@ -11,10 +11,13 @@ Harkirat's working agreement, git workflow, naming rules, and verification disci
 **unchanged**. Do not invent separate conventions for this repo.
 
 - **Working agreement / how Harkirat works:**
-  `~/.claude/projects/-Applications-Diors-Builds/memory/user_working_agreement.md` — read it first.
+  `~/.claude/projects/-Applications-Claude-Code-Diors-Builds/memory/user_working_agreement.md` — read it first.
 - **Memory store:** the SAME canonical path,
-  `~/.claude/projects/-Applications-Diors-Builds/memory/`. Do not create a separate store for this
-  repo — a second store would fragment feedback that is about Harkirat, not about a codebase.
+  `~/.claude/projects/-Applications-Claude-Code-Diors-Builds/memory/`. Do not create a separate store for
+  this repo — a second store would fragment feedback that is about Harkirat, not about a codebase.
+  ⚠️ **This path CHANGED 2026-07-28 01:41 EDT.** It was `-Applications-Diors-Builds` until the store was
+  migrated onto Diors' current repo slug; that old directory is now a frozen backup with a `_MIGRATED.md`
+  tombstone — never read or write there. See `project_memory_slug_migration.md` in the store.
 - **Session-start prompt + NON-NEGOTIABLES:** `/Applications/Claude Code/Diors-Builds/docs/SESSION-START.md`
   (including the hard gate: a `/rename` string + model/effort recommendation as the first output
   of every session).
