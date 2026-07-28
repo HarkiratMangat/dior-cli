@@ -226,7 +226,12 @@ _dior_vm_deploy() {
     local mode="$1"
     command -v gcloud >/dev/null 2>&1 || export PATH="/opt/homebrew/bin:$PATH"
     # '| grep -vE' filters out noisy SSH host key warnings to keep the terminal clean.
+    # ⚠️ A pipeline exits with the LAST command's status, so without the explicit return below this
+    # function reported grep's success even when the deploy itself failed — the caller would print
+    # "deployed" for a deploy that never happened. Same class of bug as the wrong pushed v2.36.2 tag
+    # (memory: feedback_pipe_masks_exit_status). zsh's $pipestatus[1] is gcloud's real exit code.
     gcloud compute ssh diors-builds-bot --zone=us-east1-b --quiet --command="cd ~/diors-builds && ./scripts/deploy.sh $mode" 2>&1 | grep -vE "Warning: Permanently added"
+    return ${pipestatus[1]}
 }
 
 _dior_bot_vm() {
@@ -282,7 +287,11 @@ ${DIOR_C_FOOT}========================================================${DIOR_C_R
 
 _dior_bot_check() {
     shift 2
-    local mode="" want_peaks=0 want_logs=0 want_all=0 logs_n=25 sawflag=0 sections=0
+    # logs_n mirrors Diors-Builds' own default, raised 25 -> 40 in v2.41.0 (2026-07-28 15:52 EDT). It is
+    # passed EXPLICITLY below, so leaving it at 25 would silently keep the old default for
+    # `dior bot check` while `vmstatus.sh logs` used the new one — two front-ends onto the same command
+    # disagreeing about what "default" means.
+    local mode="" want_peaks=0 want_logs=0 want_all=0 logs_n=40 logs_win="" sawflag=0 sections=0
 
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -299,9 +308,23 @@ _dior_bot_check() {
             --peaks) want_peaks=1; sawflag=1 ;;
             --logs)
                 want_logs=1; sawflag=1
-                # Consume a following count only if it's actually numeric, so
-                # `--logs --peaks` doesn't eat the next flag as a line count.
-                if [[ "$2" == <-> ]]; then logs_n="$2"; shift; fi ;;
+                # Consume up to TWO following values, in either order: a time window
+                # and/or a line count. The old guard was numeric-only (`<->`), so
+                # `--logs 2h` was NOT consumed here, fell through to the main loop,
+                # and died on the bad-option branch — meaning v2.41.0's entire
+                # time-window feature was unreachable from this CLI.
+                # Still consumes ONLY matching values, so `--logs --peaks` cannot
+                # eat the next flag.
+                local _i
+                for _i in 1 2; do
+                    if [[ "$2" =~ '^[0-9]+[mhd](-[0-9]+[mhd])?$' ]]; then
+                        logs_win="$2"; shift
+                    elif [[ "$2" == <-> ]]; then
+                        logs_n="$2"; shift
+                    else
+                        break
+                    fi
+                done ;;
             --all) want_all=1; want_peaks=1; want_logs=1; sawflag=1 ;;
             *) _dior_bad_opt "bot check" "$1"; return 1 ;;
         esac
@@ -351,13 +374,15 @@ _dior_bot_check() {
     fi
 
     if [ $want_logs -eq 1 ]; then
-        _dior_check_head "LOGS (last $logs_n)"
-        "$DIOR_BOT_DIR/scripts/vmstatus.sh" logs "$logs_n"
+        _dior_check_head "LOGS (${logs_win:+$logs_win, }up to $logs_n lines)"
+        # An empty ${logs_win:+...} vanishes entirely in zsh (no empty argument is
+        # passed), which matters — vmstatus.sh rejects an unrecognised empty arg.
+        "$DIOR_BOT_DIR/scripts/vmstatus.sh" logs ${logs_win:+$logs_win} "$logs_n"
     fi
 
     unfunction _dior_check_head
 }
-_dior_register "bot check" "VM health, usage peaks, and logs ${DIOR_C_OPT}[status|baseline] [--peaks] [--logs [N]]${DIOR_C_RESET}" \
+_dior_register "bot check" "VM health, usage peaks, and logs ${DIOR_C_OPT}[status|baseline] [--peaks] [--logs [TIME] [N]]${DIOR_C_RESET}" \
 "${DIOR_C_TITLE}========================================================${DIOR_C_RESET}
 ${DIOR_C_TITLE}📊 BOT OBSERVABILITY${DIOR_C_RESET} ${DIOR_C_DIM}— dior bot check${DIOR_C_RESET}
 ${DIOR_C_TITLE}========================================================${DIOR_C_RESET}
@@ -369,7 +394,8 @@ $(printf "  ${DIOR_C_CMD}%s${DIOR_C_RESET} ${DIOR_C_OPT}%-11s${DIOR_C_RESET} ${D
     "dior bot check" "status" "IP, systemd service state, load average, and RAM" \
     "dior bot check" "baseline" "The same snapshot, under a pre-deploy header" \
     "dior bot check" "--peaks" "12h/24h/7d CPU & RAM spikes from GCP Cloud Monitoring" \
-    "dior bot check" "--logs [N]" "Last N lines of journalctl logs ${DIOR_C_DIM}(N defaults to 25)${DIOR_C_RESET}" \
+    "dior bot check" "--logs [TIME] [N]" "Bot logs, newest last ${DIOR_C_DIM}(N defaults to 40)${DIOR_C_RESET}" \
+    "dior bot check" "  TIME" "${DIOR_C_DIM}m/h/d window: '2h' = last 2 hours; '20h-5d' = from 5 days ago UP TO 20 hours ago${DIOR_C_RESET}" \
     "dior bot check" "--all" "Shorthand for 'status --peaks --logs'")
 
 ${DIOR_C_HEAD}COMBINING OPTIONS:${DIOR_C_RESET}
