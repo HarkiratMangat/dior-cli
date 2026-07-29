@@ -69,12 +69,15 @@ DIOR_MENU_ORDER=(
     "bot dev"
     "bot commit"
     "bot vm" "bot check"
+    "legal deploy" "legal check" "legal build" "legal open"
     "update"
 )
 typeset -gA DIOR_MENU_BREAK_AFTER
 DIOR_MENU_BREAK_AFTER=(
     "bot dev" 1
     "bot commit" 1
+    "bot check" 1
+    "legal open" 1
 )
 
 # Every command's valid sub-options, in the order they should be offered.
@@ -92,6 +95,7 @@ DIOR_SUBOPTS=(
     "bot dev"   "watch nowatch kill --list --clear"
     "bot vm"    "deploy restart"
     "bot check" "status baseline --peaks --logs --all"
+    "legal deploy" "-y"
     "update"    "brew uv pipx pip3 npm all"
 )
 

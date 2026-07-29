@@ -1,13 +1,15 @@
 # dior
 
 A personal zsh CLI for the [Dior's Builds](https://github.com/HarkiratMangat/Diors-Builds) Discord
-bot — local dev bot, git commits, GCP VM deploys, and VM observability behind one command.
+bot — local dev bot, git commits, GCP VM deploys, VM observability, and the hosted legal pages
+behind one command.
 
 ```
 dior bot dev     [watch|nowatch|kill] [--list|--clear]
 dior bot commit  ['<Title>' ['<Body>']]
 dior bot vm      <deploy|restart>
 dior bot check   [status|baseline] [--peaks] [--logs [N]] [--all]
+dior legal       <deploy|check|build|open> [-y]
 dior update      <brew|uv|pipx|pip3|npm|all>
 ```
 
@@ -60,6 +62,7 @@ machine.
 | `core.zsh` | config, colors, help manifest, `DIOR_SUBOPTS`, shared helpers, the `dior()` dispatcher |
 | `help.zsh` | menu rendering, guide lookup, the suggester, tab-completion |
 | `bot.zsh` | `bot dev` / `bot commit` / `bot vm` / `bot check` |
+| `legal.zsh` | `legal deploy` / `legal check` / `legal build` / `legal open` — the Cloudflare-hosted Terms & Privacy site |
 | `update.zsh` | the package-manager commands |
 | `scripts/` | dev utilities that aren't part of the CLI — see below |
 
