@@ -98,17 +98,59 @@ _dior_legal_check() {
     # otherwise read as "the site is down" when it is perfectly healthy — that
     # exact false alarm cost real time on 2026-07-29 18:24 EDT.
     local ua="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36"
-    local drift=0 down=0 f local_sum live_sum code tmp
+    local drift=0 down=0 f local_sum live_sum code tmp root_code root_final _try
     tmp=$(mktemp)
 
     echo "${DIOR_C_TITLE}⚖️  LEGAL SITE${DIOR_C_RESET} ${DIOR_C_DIM}— $DIOR_LEGAL_HOST${DIOR_C_RESET}"
     echo ""
 
-    for f in legal/terms.html legal/privacy.html legal/index.html LICENSE NOTICE; do
+    # DERIVED from the local build, never hardcoded. This list named three pages by
+    # hand; the site grew to seven on 2026-07-29 22:30 EDT, and this command would
+    # have printed "byte-identical to your local build" while never once looking at
+    # license, notice, contributing or contributors. A checker that quietly stops
+    # covering new files is worse than no checker, because it still reports OK.
+    local -a files
+    files=(${${(f)"$(cd "$DIOR_BOT_DIR" && ls public/legal/*.html 2>/dev/null)"}#public/})
+    files+=(LICENSE NOTICE)
+    printf "  ${DIOR_C_DIM}checking %d file(s)${DIOR_C_RESET}\n\n" "${#files[@]}"
+
+    for f in "${files[@]}"; do
         # -L is REQUIRED: Pages 308-redirects the .html form to its extensionless
         # canonical URL, and without -L every check returns 0 bytes and every
         # comparison "fails". That produced a completely false drift report once.
         code=$(curl -s -L --compressed -A "$ua" -o "$tmp" -w '%{http_code}' "$DIOR_LEGAL_HOST/$f")
+
+        # Retry while the edge settles, because Cloudflare's nodes do not all carry a
+        # new deployment at the same instant.
+        #
+        # BOTH failure shapes have now been measured, and the first version of this
+        # only handled one of them:
+        #   · DRIFT — 2026-07-29 22:25 EDT: NOTICE read as changed seconds after a
+        #     successful deploy and was byte-identical on the next fetch.
+        #   · 404 — 2026-07-30 00:15 EDT: right after a deploy, /legal/ and
+        #     /legal/privacy returned 404 while the other seven files were already
+        #     correct, and all of them were 200 sixty seconds later with no further
+        #     action. The original retry fired only when code was ALREADY 200, so it
+        #     could not see this at all — the check reported the landing page DOWN and
+        #     told the reader to redeploy a site that was fine.
+        # A false DOWN is worse than a false DRIFT: it reads as an outage.
+        #
+        # The waits are deliberately longer than the original 2s. The 404 window was
+        # under a minute but not instant, and the cost of waiting is a few seconds on
+        # a command that is usually run once, right after deploying.
+        for _try in 1 2 3; do
+            # Break when there is nothing left for a retry to improve: the file is
+            # live AND either matches the local build or has no local copy to match
+            # against (that case is reported as "?" below, and waiting cannot change
+            # it — retrying it would just cost 15s per file for no reason).
+            if [ "$code" = "200" ] && { [ ! -f "$DIOR_BOT_DIR/public/$f" ] || \
+               [ "$(shasum -a 256 "$tmp" | cut -d' ' -f1)" = "$(shasum -a 256 "$DIOR_BOT_DIR/public/$f" | cut -d' ' -f1)" ]; }; then
+                break
+            fi
+            [ "$_try" -eq 3 ] && break
+            sleep $(( _try * 5 ))
+            code=$(curl -s -L --compressed -A "$ua" -o "$tmp" -w '%{http_code}' "$DIOR_LEGAL_HOST/$f")
+        done
 
         if [ "$code" != "200" ]; then
             printf "  ${DIOR_C_WARN}%-6s${DIOR_C_RESET} %s ${DIOR_C_DIM}(HTTP %s)${DIOR_C_RESET}\n" "DOWN" "$f" "$code"
@@ -131,6 +173,31 @@ _dior_legal_check() {
             drift=$((drift + 1))
         fi
     done
+
+    # The SITE ROOT, which is not one of the uploaded files and so was invisible to
+    # the loop above. It is served by the _redirects rule (/ -> /legal/ 302), a
+    # separate mechanism from asset serving, and it needs its own assertion.
+    #
+    # This is not hypothetical. On 2026-07-30 00:12 EDT Harkirat opened the bare
+    # domain and got a 404 while this command reported the site perfectly healthy.
+    # Two deployments had published ZERO files; every /legal/* path still answered 200
+    # from Cloudflare's cache (age 6525s), so the byte comparison passed on stale
+    # bytes, and the root — uncacheable because it is a redirect — was the only thing
+    # exposing the outage. A checker blind to the one URL a human actually types is
+    # not checking the site.
+    root_code=$(curl -s -o /dev/null -A "$ua" -w '%{http_code}' "$DIOR_LEGAL_HOST/")
+    root_final=$(curl -s -L -o /dev/null -A "$ua" -w '%{http_code}' "$DIOR_LEGAL_HOST/")
+    if [ "$root_code" = "301" ] || [ "$root_code" = "302" ] || [ "$root_code" = "307" ] || [ "$root_code" = "308" ]; then
+        if [ "$root_final" = "200" ]; then
+            printf "  ${DIOR_C_OK}%-6s${DIOR_C_RESET} %s ${DIOR_C_DIM}(%s -> /legal/)${DIOR_C_RESET}\n" "OK" "/" "$root_code"
+        else
+            printf "  ${DIOR_C_WARN}%-6s${DIOR_C_RESET} %s ${DIOR_C_DIM}(redirects, but lands on HTTP %s)${DIOR_C_RESET}\n" "DOWN" "/" "$root_final"
+            down=$((down + 1))
+        fi
+    else
+        printf "  ${DIOR_C_WARN}%-6s${DIOR_C_RESET} %s ${DIOR_C_DIM}(HTTP %s — _redirects missing from the deployment?)${DIOR_C_RESET}\n" "DOWN" "/" "$root_code"
+        down=$((down + 1))
+    fi
 
     rm -f "$tmp"
     echo ""
