@@ -46,9 +46,10 @@ if [[ -t 1 ]]; then
     DIOR_C_HELP=$'\e[38;5;230m'      # cream        -- the 💡 usage tips
     DIOR_C_WARN=$'\e[1;38;5;227m'    # bold yellow  -- refused combinations, guide cautions
     DIOR_C_ERROR=$'\e[1;38;5;196m'   # bold red     -- unrecognized commands and options
+    DIOR_C_OK=$'\e[1;38;5;82m'       # bold green   -- healthy/matching status (legal check's OK rows)
     DIOR_C_DIM=$'\e[2m'              # dim          -- '->' separators, parenthetical asides
 else
-    DIOR_C_RESET="" DIOR_C_TITLE="" DIOR_C_FOOT="" DIOR_C_HEAD="" DIOR_C_CMD="" DIOR_C_ARG="" DIOR_C_OPT="" DIOR_C_HELP="" DIOR_C_WARN="" DIOR_C_ERROR="" DIOR_C_DIM=""
+    DIOR_C_RESET="" DIOR_C_TITLE="" DIOR_C_FOOT="" DIOR_C_HEAD="" DIOR_C_CMD="" DIOR_C_ARG="" DIOR_C_OPT="" DIOR_C_HELP="" DIOR_C_WARN="" DIOR_C_ERROR="" DIOR_C_OK="" DIOR_C_DIM=""
 fi
 
 typeset -gA DIOR_HELP_SUMMARY   # key: "group name" (e.g. "bot commit") -> one-line menu blurb
@@ -77,9 +78,18 @@ typeset -gA DIOR_MENU_BREAK_AFTER
 DIOR_MENU_BREAK_AFTER=(
     "bot dev" 1
     "bot commit" 1
-    "bot check" 1
-    "legal open" 1
-    "text unwrap" 1
+)
+
+# One header line per GROUP (not per raw DIOR_MENU_ORDER entry), keyed by the group's
+# first word. _dior_print_menu falls back to a generic "<GROUP> COMMANDS" label for
+# anything missing here, so a new group is never silently unlabeled -- adding one to
+# DIOR_MENU_ORDER without a matching entry here degrades instead of breaking.
+typeset -gA DIOR_GROUP_HEADER
+DIOR_GROUP_HEADER=(
+    "bot"    "🤖 BOT COMMANDS"
+    "legal"  "⚖️  LEGAL SITE COMMANDS"
+    "text"   "📄 TEXT COMMANDS"
+    "update" "🧹 MAINTENANCE COMMANDS"
 )
 
 # Every command's valid sub-options, in the order they should be offered.
