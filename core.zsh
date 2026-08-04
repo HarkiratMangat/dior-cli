@@ -72,6 +72,7 @@ DIOR_MENU_ORDER=(
     "bot vm" "bot check"
     "legal deploy" "legal check" "legal build" "legal open"
     "text unwrap"
+    "doctor" "notes" "repo" "cd"
     "update"
 )
 typeset -gA DIOR_MENU_BREAK_AFTER
@@ -89,6 +90,10 @@ DIOR_GROUP_HEADER=(
     "bot"    "🤖 BOT COMMANDS"
     "legal"  "⚖️  LEGAL SITE COMMANDS"
     "text"   "📄 TEXT COMMANDS"
+    "doctor" "🧭 WORKSPACE COMMANDS"
+    "notes"  "🧭 WORKSPACE COMMANDS"
+    "repo"   "🧭 WORKSPACE COMMANDS"
+    "cd"     "🧭 WORKSPACE COMMANDS"
     "update" "🧹 MAINTENANCE COMMANDS"
 )
 
@@ -109,6 +114,7 @@ DIOR_SUBOPTS=(
     "bot check" "status baseline --peaks --logs --all"
     "legal deploy" "-y"
     "text unwrap" "--out --in-place"
+    "cd" "--dioreo --gif --cli"
     "update"    "brew uv pipx pip3 npm all"
 )
 
@@ -193,6 +199,17 @@ dior() {
         # being reported as the typo it is. Verified 2026-07-27 11:10 EDT that a
         # _dior_<group> fallback was previously unreachable at all, because the
         # old dispatcher required a non-empty $2 before trying anything.
+        "_dior_${1}" "$@"
+    elif [ -n "$2" ] && [[ "$2" == -* ]] && typeset -f "_dior_${1}" >/dev/null 2>&1 \
+         && [[ " ${DIOR_SUBOPTS[$1]} " == *" $2 "* ]]; then
+        # A single-word command whose own "modes" are FLAGS rather than bare
+        # words (e.g. `dior cd --dioreo`, `dior branches --prune`) -- added
+        # alongside the bare-word case above, not replacing it. Gated on the
+        # flag ACTUALLY being listed in that command's own DIOR_SUBOPTS entry,
+        # so this can't accidentally swallow a typo': `dior update -y` (not a
+        # real update flag) still falls through to the suggester below and
+        # gets reported precisely, exactly as before this branch existed --
+        # only a flag the command itself declares reaches its bare function.
         "_dior_${1}" "$@"
     else
         # Unrecognized command -- try to catch the likely mistake (missing
