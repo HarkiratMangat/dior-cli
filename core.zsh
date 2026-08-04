@@ -73,6 +73,7 @@ DIOR_MENU_ORDER=(
     "legal deploy" "legal check" "legal build" "legal open"
     "text unwrap"
     "docs audit" "emoji check"
+    "changelog" "bump"
     "doctor" "notes" "repo" "cd"
     "update"
 )
@@ -93,6 +94,8 @@ DIOR_GROUP_HEADER=(
     "text"   "📄 TEXT COMMANDS"
     "docs"   "🔍 CHECKS"
     "emoji"  "🔍 CHECKS"
+    "changelog" "🏷️  RELEASE COMMANDS"
+    "bump"      "🏷️  RELEASE COMMANDS"
     "doctor" "🧭 WORKSPACE COMMANDS"
     "notes"  "🧭 WORKSPACE COMMANDS"
     "repo"   "🧭 WORKSPACE COMMANDS"
@@ -118,8 +121,16 @@ DIOR_SUBOPTS=(
     "legal deploy" "-y"
     "text unwrap" "--out --in-place"
     "cd" "--dioreo --gif --cli"
+    "changelog" "--out --dry-run"
+    "bump" "--dry-run"
     "update"    "brew uv pipx pip3 npm all"
 )
+
+# Single-word commands whose first real argument is a freeform VALUE rather
+# than a fixed mode/flag -- see the matching branch in dior()'s dispatcher
+# below for why this needs to be an explicit opt-in list, not a general rule.
+typeset -ga DIOR_FREEFORM_ARG
+DIOR_FREEFORM_ARG=(bump)
 
 # Registers one command's help text under both maps in a single call.
 # NOTE: always assign array keys via a variable/positional-param ($1, not a literal
@@ -213,6 +224,17 @@ dior() {
         # real update flag) still falls through to the suggester below and
         # gets reported precisely, exactly as before this branch existed --
         # only a flag the command itself declares reaches its bare function.
+        "_dior_${1}" "$@"
+    elif [ -n "$2" ] && typeset -f "_dior_${1}" >/dev/null 2>&1 \
+         && [[ " ${DIOR_FREEFORM_ARG[*]} " == *" $1 "* ]]; then
+        # A single-word command whose first real argument is a freeform VALUE,
+        # not a fixed mode or flag (currently just `bump`'s version string) --
+        # these validate their own input internally (see _dior_bump's own
+        # regex check) rather than the dispatcher trying to recognize it.
+        # Explicit opt-in via DIOR_FREEFORM_ARG so this can never accidentally
+        # swallow a typo for a command that expects fixed modes/flags instead
+        # -- `update`, `cd`, `branches` are NOT in that list, so `dior update
+        # nope` still falls through to the suggester exactly as before.
         "_dior_${1}" "$@"
     else
         # Unrecognized command -- try to catch the likely mistake (missing
