@@ -1,17 +1,26 @@
 # dior
 
 A personal zsh CLI for the [Dior's Builds](https://github.com/HarkiratMangat/Diors-Builds) Discord
-bot — local dev bot, git commits, GCP VM deploys, VM observability, and the hosted legal pages
-behind one command.
+bot — local dev bot, git commits, GCP VM deploys, VM observability, the hosted legal pages, release
+tooling, and general-purpose workspace utilities, all behind one command.
 
 ```
-dior bot dev     [watch|nowatch|kill] [--list|--clear]
-dior bot commit  ['<Title>' ['<Body>']]
-dior bot vm      <deploy|restart>
-dior bot check   [status|baseline] [--peaks] [--logs [N]] [--all]
-dior legal       <deploy|check|build|open> [-y]
-dior text unwrap <file> [--out <dir>|--in-place]
-dior update      <brew|uv|pipx|pip3|npm|all>
+dior bot dev       [watch|nowatch|kill] [--list|--clear]
+dior bot commit    ['<Title>' ['<Body>']]
+dior bot vm        <deploy|restart>
+dior bot check     [status|baseline] [--peaks] [--logs [N]] [--all]
+dior legal         <deploy|check|build|open> [-y]
+dior text unwrap   <file> [--out <dir>|--in-place]
+dior docs audit
+dior emoji check
+dior changelog     [--out <file>] [--dry-run]
+dior bump          <version> [--dry-run]
+dior branches      [--list|--prune|--find <query>] [--dry-run]
+dior doctor
+dior notes
+dior repo
+dior cd            [--dioreo|--gif|--cli]
+dior update        [self] [--dry-run]
 ```
 
 ## The grammar
@@ -25,9 +34,10 @@ Every command that takes options uses the same one:
 | no options at all | the command's safe default, or its guide where every mode is consequential |
 
 The *shape tells you whether options combine*, so there's nothing arbitrary to memorize.
-`dior bot vm` and `dior update` deliberately have no default action — every one of their modes
-touches something real (the live prod bot; five package managers), so a bare invocation prints
-the guide instead of picking for you.
+`dior bot vm` deliberately has no default action — both of its modes touch the live prod bot, so a
+bare invocation prints the guide instead of picking for you. `dior update` is the deliberate
+exception to "no default for consequential commands": a bare invocation runs topgrade for real,
+since that IS the whole point of the command (topgrade handles its own per-step confirmations).
 
 ## Help
 
@@ -65,7 +75,11 @@ machine.
 | `bot.zsh` | `bot dev` / `bot commit` / `bot vm` / `bot check` |
 | `legal.zsh` | `legal deploy` / `legal check` / `legal build` / `legal open` — the Cloudflare-hosted Terms & Privacy site |
 | `text.zsh` | `text unwrap` — rejoin LLM-style hard-wrapped lines back into flowing paragraphs |
-| `update.zsh` | the package-manager commands |
+| `checks.zsh` | `docs audit` / `emoji check` — thin wrappers around Diors-Builds' own verification scripts |
+| `release.zsh` | `changelog` (git-cliff draft) / `bump` (syncs package.json + package-lock.json) |
+| `branches.zsh` | `branches` — list/find/prune local branches whose remote is gone |
+| `workspace.zsh` | `doctor` / `notes` / `repo` / `cd` — environment health, navigation, the notes scratchpad |
+| `update.zsh` | `update` (topgrade) / `update self` (pulls this repo) |
 | `scripts/` | dev utilities that aren't part of the CLI — see below |
 
 ## Colors
