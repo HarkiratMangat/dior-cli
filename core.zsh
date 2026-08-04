@@ -74,6 +74,7 @@ DIOR_MENU_ORDER=(
     "text unwrap"
     "docs audit" "emoji check"
     "changelog" "bump"
+    "branches"
     "doctor" "notes" "repo" "cd"
     "update"
 )
@@ -96,6 +97,7 @@ DIOR_GROUP_HEADER=(
     "emoji"  "🔍 CHECKS"
     "changelog" "🏷️  RELEASE COMMANDS"
     "bump"      "🏷️  RELEASE COMMANDS"
+    "branches" "🧭 WORKSPACE COMMANDS"
     "doctor" "🧭 WORKSPACE COMMANDS"
     "notes"  "🧭 WORKSPACE COMMANDS"
     "repo"   "🧭 WORKSPACE COMMANDS"
@@ -123,6 +125,7 @@ DIOR_SUBOPTS=(
     "cd" "--dioreo --gif --cli"
     "changelog" "--out --dry-run"
     "bump" "--dry-run"
+    "branches" "--list --prune --find --dry-run"
     "update"    "brew uv pipx pip3 npm all"
 )
 
