@@ -33,11 +33,28 @@ DIOR_LEGAL_HOST="https://diors-builds-legal.pages.dev"
 DIOR_LEGAL_TERMS_URL="$DIOR_LEGAL_HOST/legal/terms"
 DIOR_LEGAL_PRIVACY_URL="$DIOR_LEGAL_HOST/legal/privacy"
 
+# Syntax pre-check shared by build and deploy. The site's CSS lives inside JS template
+# literals in these two files, so a backtick inside a stylesheet comment (e.g. one that quotes a
+# CSS property or selector) is a SyntaxError -- it has bitten repeatedly, most recently a comment
+# containing "fi" in backticks. `npm run site` already ran `node --check` on both files before
+# building; this CLI path didn't, which meant `dior legal deploy` -- the one that actually
+# publishes -- was the LESS safe of the two ways to build this site. Filed as a real defect
+# (`meta-deferred-list.md`, 2026-08-01 22:20 EDT): the CLI must not be a worse variant of a command
+# it wraps. Bails before anything is written or published; caller is responsible for `cd
+# "$DIOR_BOT_DIR"` first, same convention as every other function here.
+_dior_legal_syntax_check() {
+    if ! node --check scripts/buildLegalPages.js || ! node --check scripts/lib/chronicle.js; then
+        echo "${DIOR_C_ERROR}⚠️  Syntax check failed on the build scripts.${DIOR_C_RESET}"
+        return 1
+    fi
+}
+
 # ------------------------------------------------------------------------------
 # dior legal build — regenerate the HTML from the Markdown
 # ------------------------------------------------------------------------------
 _dior_legal_build() {
     cd "$DIOR_BOT_DIR" || return 1
+    _dior_legal_syntax_check || return 1
     echo "${DIOR_C_HEAD}Rebuilding legal pages from docs/legal/*.md${DIOR_C_RESET}"
     node scripts/buildLegalPages.js
 }
@@ -63,6 +80,10 @@ _dior_legal_deploy() {
     # resolve), so a non-zero exit here means the output is not publishable.
     # Deploying anyway would put a known-incomplete legal document online.
     echo "${DIOR_C_HEAD}1/2  Rebuilding${DIOR_C_RESET}"
+    if ! _dior_legal_syntax_check; then
+        echo "   NOT deploying — the live site is untouched."
+        return 1
+    fi
     if ! node scripts/buildLegalPages.js; then
         echo "${DIOR_C_WARN}⚠️  Build failed its own verification — NOT deploying.${DIOR_C_RESET}"
         echo "   Fix the findings above. The live site is untouched."
