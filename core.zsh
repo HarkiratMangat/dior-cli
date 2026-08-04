@@ -70,6 +70,7 @@ DIOR_MENU_ORDER=(
     "bot commit"
     "bot vm" "bot check"
     "legal deploy" "legal check" "legal build" "legal open"
+    "text unwrap"
     "update"
 )
 typeset -gA DIOR_MENU_BREAK_AFTER
@@ -78,6 +79,7 @@ DIOR_MENU_BREAK_AFTER=(
     "bot commit" 1
     "bot check" 1
     "legal open" 1
+    "text unwrap" 1
 )
 
 # Every command's valid sub-options, in the order they should be offered.
@@ -96,6 +98,7 @@ DIOR_SUBOPTS=(
     "bot vm"    "deploy restart"
     "bot check" "status baseline --peaks --logs --all"
     "legal deploy" "-y"
+    "text unwrap" "--out --in-place"
     "update"    "brew uv pipx pip3 npm all"
 )
 
