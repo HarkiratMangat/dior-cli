@@ -72,6 +72,7 @@ DIOR_MENU_ORDER=(
     "bot vm" "bot check"
     "legal deploy" "legal check" "legal build" "legal open"
     "text unwrap"
+    "docs audit" "emoji check"
     "doctor" "notes" "repo" "cd"
     "update"
 )
@@ -90,6 +91,8 @@ DIOR_GROUP_HEADER=(
     "bot"    "🤖 BOT COMMANDS"
     "legal"  "⚖️  LEGAL SITE COMMANDS"
     "text"   "📄 TEXT COMMANDS"
+    "docs"   "🔍 CHECKS"
+    "emoji"  "🔍 CHECKS"
     "doctor" "🧭 WORKSPACE COMMANDS"
     "notes"  "🧭 WORKSPACE COMMANDS"
     "repo"   "🧭 WORKSPACE COMMANDS"
