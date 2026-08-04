@@ -51,7 +51,7 @@ _dior_legal_deploy() {
     while [ $# -gt 0 ]; do
         case "$1" in
             -y|--yes) skip_confirm=1 ;;
-            *) _dior_bad_option "legal deploy" "$1"; return 1 ;;
+            *) _dior_bad_opt "legal deploy" "$1"; return 1 ;;
         esac
         shift
     done
