@@ -126,7 +126,7 @@ DIOR_SUBOPTS=(
     "changelog" "--out --dry-run"
     "bump" "--dry-run"
     "branches" "--list --prune --find --dry-run"
-    "update"    "brew uv pipx pip3 npm all"
+    "update"    "self --dry-run"
 )
 
 # Single-word commands whose first real argument is a freeform VALUE rather
