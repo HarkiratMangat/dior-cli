@@ -22,7 +22,7 @@
 # reaches this function.
 _dior_print_menu() {
     local filter="$1"
-    local key group lastgroup="" padded
+    local key group header lastheader="" padded
 
     # Column width computed from the actual keys being printed this call, not a
     # hardcoded number -- a fixed %-11s was sized for the original shorter
@@ -55,9 +55,14 @@ _dior_print_menu() {
     # Walks DIOR_MENU_ORDER (hand-curated, workflow-grouped) rather than sorting
     # DIOR_HELP_SUMMARY's keys -- that's the fix for commands that belong
     # together landing next to each other instead of wherever the alphabet put
-    # them. A header prints once per GROUP (not once per raw DIOR_MENU_ORDER
-    # entry -- three separate non-bot groups used to all collapse onto one
-    # hardcoded "MAINTENANCE COMMANDS" label and reprint it three times).
+    # them. A header prints once per HEADER TEXT, not once per raw group word --
+    # several single-word commands (doctor, repo, cd, notes, branches) share one
+    # "WORKSPACE COMMANDS" umbrella in DIOR_GROUP_HEADER despite each being its
+    # own distinct $group (a single-word command's "group" is just its own
+    # name). Deduping on the group word instead of the resolved header text is
+    # the exact bug that produced triplicate "MAINTENANCE COMMANDS" headers
+    # before this function's first fix -- reproducing it here was almost a
+    # repeat of that mistake, caught before it shipped rather than after.
     # DIOR_MENU_BREAK_AFTER adds a blank line after specific keys to separate
     # clusters WITHIN a group. Padding is computed on the PLAIN key first, then
     # wrapped in color -- coloring inside a printf width field throws off
@@ -65,10 +70,11 @@ _dior_print_menu() {
     for key in "${DIOR_MENU_ORDER[@]}"; do
         group="${key%% *}"
         [ -n "$filter" ] && [ "$group" != "$filter" ] && continue
-        if [ -z "$filter" ] && [ "$group" != "$lastgroup" ]; then
-            [ -n "$lastgroup" ] && echo ""
-            echo "${DIOR_C_HEAD}${DIOR_GROUP_HEADER[$group]:-${(U)group} COMMANDS}:${DIOR_C_RESET}"
-            lastgroup="$group"
+        header="${DIOR_GROUP_HEADER[$group]:-${(U)group} COMMANDS}"
+        if [ -z "$filter" ] && [ "$header" != "$lastheader" ]; then
+            [ -n "$lastheader" ] && echo ""
+            echo "${DIOR_C_HEAD}${header}:${DIOR_C_RESET}"
+            lastheader="$header"
         fi
         padded=$(printf "%-${width}s" "$key")
         printf "  ${DIOR_C_CMD}%s${DIOR_C_RESET} ${DIOR_C_DIM}->${DIOR_C_RESET} %s\n" "$padded" "$DIOR_HELP_SUMMARY[$key]"
