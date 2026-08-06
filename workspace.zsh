@@ -213,16 +213,39 @@ ${DIOR_C_FOOT}========================================================${DIOR_C_R
 # dior notes — open the central notes scratchpad, with an open-items count
 # ------------------------------------------------------------------------------
 _dior_notes() {
-    local file="$DIOR_BOT_DIR/docs/diors-builds notes.md"
+    # Moved 2026-08-06 08:00 EDT from "docs/diors-builds notes.md" (the rename also dropped the
+    # space that every reference had to quote around). This file lives OUTSIDE the bot repo, so
+    # that rename's repo-side sweep could not see it -- `dior notes` was broken until 09:02 EDT.
+    local file="$DIOR_BOT_DIR/docs/ideas/diors-notes.md"
     if [ ! -f "$file" ]; then
         echo "${DIOR_C_ERROR}⚠️  Not found: $file${DIOR_C_RESET}"
         return 1
     fi
-    # Mirrors the SessionStart hook's own scan window (## Questions -> ## 📍,
-    # documented in CLAUDE.md) so this count can't drift from what that hook
-    # already reports at session start -- counts non-blank, non-heading lines.
+    # DELEGATES to the bot repo's notes-open-items.sh -- the single source of truth for "which
+    # lines count as open". It does NOT reimplement the scan.
+    #
+    # ⚠️ It used to, and the reimplementation was WRONG BY 10x -- measured 2026-08-06 09:02 EDT:
+    # this command said 29 open items while the SessionStart hook said 3. The old comment here
+    # claimed the count "can't drift from what that hook already reports", which made it worse:
+    # documented as guaranteed-consistent while being an order of magnitude off. The awk counted
+    # every non-blank non-heading line in the window (continuation lines, comment bodies, already-
+    # marked items); the hook counts actual unmarked list items, `^- (\[ \]|[^<[])`.
+    #
+    # notes-open-items.sh exists precisely because that regex had been duplicated in two places and
+    # one copy silently went unfixed. This file was a THIRD copy, invisible to the bot repo's own
+    # sweeps because it lives outside that repo -- which is also why the notes-file rename broke
+    # this command without anything reporting it.
+    local scanner="$DIOR_BOT_DIR/.claude/hooks/notes-open-items.sh"
     local count
-    count=$(awk '/^## Questions/{f=1; next} /^## 📍/{f=0} f && NF && $0 !~ /^#/' "$file" | wc -l | tr -d ' ')
+    if [ -x "$scanner" ]; then
+        count=$("$scanner" "$file" | grep -c . | tr -d ' ')
+    else
+        # Fail LOUD rather than printing a number derived a different way. A count that silently
+        # falls back to a second implementation is the exact defect this block just fixed.
+        echo "${DIOR_C_WARN}⚠️  Open-item count unavailable: ${scanner:t} not found or not executable${DIOR_C_RESET}"
+        open "$file"
+        return 0
+    fi
     if [ "$count" -gt 0 ]; then
         echo "${DIOR_C_WARN}$count open line(s) in the working sections${DIOR_C_RESET}"
     else
@@ -234,7 +257,7 @@ _dior_register "notes" "Open the central notes scratchpad, with an open-items co
 "${DIOR_C_TITLE}========================================================${DIOR_C_RESET}
 ${DIOR_C_TITLE}📝 NOTES SCRATCHPAD${DIOR_C_RESET} ${DIOR_C_DIM}— dior notes${DIOR_C_RESET}
 ${DIOR_C_TITLE}========================================================${DIOR_C_RESET}
-Opens ${DIOR_C_ARG}docs/diors-builds notes.md${DIOR_C_RESET} in its default app (MarkEdit), after printing how
+Opens ${DIOR_C_ARG}docs/ideas/diors-notes.md${DIOR_C_RESET} in its default app (MarkEdit), after printing how
 many open (unmarked) lines sit in its working sections -- the same ## Questions
 -> ## 📍 scan window the SessionStart hook already checks every session.
 ${DIOR_C_FOOT}========================================================${DIOR_C_RESET}"
