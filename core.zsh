@@ -12,6 +12,15 @@
 # the dispatcher. Fixed repo path -- never re-derive this from pwd/$0.
 DIOR_BOT_DIR="/Applications/Claude Code/Diors-Builds"
 
+# The gif-background-remover skill's repo, for `dior gif`. Same shape as DIOR_BOT_DIR
+# and the same reason: a fixed path, never re-derived from pwd. Added 2026-09-03 15:48 EDT.
+# This is the DEV repo deliberately -- `dior gif` should exercise the working tree,
+# the way DIOR_BOT_DIR points at the bot repo rather than at a released copy. If it
+# is missing, scripts/gif_wizard.py falls back to the bundle claude.ai syncs onto
+# this machine and SAYS which one it used; a silent fallback would let the CLI and
+# the live skill disagree invisibly.
+DIOR_GIF_DIR="/Applications/Claude Code/Gif-Background-Remover"
+
 # Color codes for the help/menu system, computed once when this file is sourced.
 # Not re-checked per dior-invocation -- .zshrc only ever loads in an interactive
 # terminal, so this is always accurate at startup. If a single command's output
@@ -72,6 +81,7 @@ DIOR_MENU_ORDER=(
     "bot vm" "bot check"
     "legal deploy" "legal check" "legal build" "legal open"
     "text unwrap"
+    "gif clean" "gif check" "gif presets"
     "docs audit" "emoji check"
     "changelog" "bump"
     "branches"
@@ -93,6 +103,7 @@ DIOR_GROUP_HEADER=(
     "bot"    "🤖 BOT COMMANDS"
     "legal"  "⚖️  LEGAL SITE COMMANDS"
     "text"   "📄 TEXT COMMANDS"
+    "gif"    "🎞️  GIF COMMANDS"
     "docs"   "🔍 CHECKS"
     "emoji"  "🔍 CHECKS"
     "changelog" "🏷️  RELEASE COMMANDS"
@@ -122,6 +133,8 @@ DIOR_SUBOPTS=(
     "bot check" "status baseline --peaks --logs --all"
     "legal deploy" "-y"
     "text unwrap" "--out --in-place"
+    "gif clean" "--to --out --yes --no-preview"
+    "gif check" "--why"
     "cd" "--dioreo --gif --cli"
     "changelog" "--out --dry-run"
     "bump" "--dry-run"
