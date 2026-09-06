@@ -38,7 +38,7 @@ So the bridge is an **interview**, not a flag surface.
 
 ## Shape
 
-Two halves, matching the split `text unwrap` → `scripts/unwrap-hard-breaks.js` already established in this repo:
+Two halves, matching the split `text unwrap` → `scripts/reflow-prose.mjs` already established in this repo:
 
 - **`gif.zsh`** owns the surface — registration, the menu entry, the guides, tab-completion, argument validation, and exporting the `DIOR_C_*` palette so the Python half prints in the same colours rather than inventing a second visual system.
 - **`scripts/gif_wizard.py`** owns the engine — `--recommend`, the questions, preview rendering, flag assembly, the render, verification, and reporting. Python because the work is JSON parsing, PIL image cropping and subprocess orchestration; zsh would be fragile at all three.

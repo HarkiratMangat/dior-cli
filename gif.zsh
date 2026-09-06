@@ -39,7 +39,7 @@
 # Everything below shells out to one Python script; the CLI half owns the
 # surface (menu, guides, tab-completion, argument validation) and the Python half
 # owns the engine (analysis, the questions, rendering, verification). Same split
-# as `text unwrap` -> scripts/unwrap-hard-breaks.js, which is the established
+# as `text unwrap` -> scripts/reflow-prose.mjs, which is the established
 # pattern here rather than a new one.
 _dior_gif_run() {
     local mode="$1"; shift
