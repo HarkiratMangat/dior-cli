@@ -80,7 +80,7 @@ DIOR_MENU_ORDER=(
     "bot commit"
     "bot vm" "bot check"
     "legal deploy" "legal check" "legal build" "legal open"
-    "text unwrap" "text paste"
+    "reflow file" "reflow text"
     "gif clean" "gif check" "gif presets"
     "docs audit" "emoji check"
     "changelog" "bump"
@@ -102,7 +102,7 @@ typeset -gA DIOR_GROUP_HEADER
 DIOR_GROUP_HEADER=(
     "bot"    "🤖 BOT COMMANDS"
     "legal"  "⚖️  LEGAL SITE COMMANDS"
-    "text"   "📄 TEXT COMMANDS"
+    "reflow" "📄 TEXT COMMANDS"
     "gif"    "🎞️  GIF COMMANDS"
     "docs"   "🔍 CHECKS"
     "emoji"  "🔍 CHECKS"
@@ -132,8 +132,8 @@ DIOR_SUBOPTS=(
     "bot vm"    "deploy restart"
     "bot check" "status baseline --peaks --logs --all"
     "legal deploy" "-y"
-    "text unwrap" "--out --in-place"
-    "text paste" "--out"
+    "reflow file" "--out --overwrite --copy"
+    "reflow text" "--out --copy --stdin"
     "gif clean" "--to --out --yes --no-preview"
     "gif check" "--why"
     "cd" "--dioreo --gif --cli"
@@ -248,10 +248,11 @@ dior() {
         # not a fixed mode or flag (currently just `bump`'s version string) --
         # these validate their own input internally (see _dior_bump's own
         # regex check) rather than the dispatcher trying to recognize it.
-        # Explicit opt-in via DIOR_FREEFORM_ARG so this can never accidentally
-        # swallow a typo for a command that expects fixed modes/flags instead
-        # -- `update`, `cd`, `branches` are NOT in that list, so `dior update
-        # nope` still falls through to the suggester exactly as before.
+        # Explicit opt-in
+        # via DIOR_FREEFORM_ARG so this can never accidentally swallow a typo
+        # for a command that expects fixed modes/flags instead -- `update`,
+        # `cd`, `branches` are NOT in that list, so `dior update nope` still
+        # falls through to the suggester exactly as before.
         "_dior_${1}" "$@"
     else
         # Unrecognized command -- try to catch the likely mistake (missing
