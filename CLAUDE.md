@@ -78,6 +78,19 @@ Shell config fails silently and at a distance, so "it looks right" is not eviden
   the surrounding format string** — so color codes belong in the FORMAT, never inside a padded value.
   A column whose value is identical on every row needs no padding at all.
 
+## `dior gif` — the one command with an engine outside this repo
+Added 2026-09-03 15:48 EDT. `gif.zsh` is a surface over `scripts/gif_wizard.py`, which shells out to a script in ANOTHER repo (`DIOR_GIF_DIR`, the gif-background-remover skill). Three things follow, and none of them are guessable from the code:
+
+- **Never add a flag that maps 1:1 onto one of that skill's 64 flags.** The whole point is that the person using it does not learn them. New surface belongs in `PRESETS` in the wizard (a goal) or as a question the interview asks — not as a passthrough.
+- **Never let a size target be inferred.** The skill's own docs record a guessed size/format target as its single worst measured failure, and it is invisible downstream because a guess produces a real file at a real size. `--to` is the only channel, the default preset applies no compression flags at all, and a large output is named and offered. If you find yourself adding a heuristic that picks a target, that is the bug.
+- **Never print a clean verification when `--verify` skipped its pixel checks.** It skips all of them when the output was cropped or resized and says so only in a `note` field. `report_verify` handles that case explicitly; a tick there would be a vacuous pass.
+
+Every number in `PRESETS` is cited from the skill repo's own measurements (the 256 KB Discord cap, the q85→q70 AVIF cascade at 128×128). Do not add a preset whose numbers you cannot cite — a plausible-sounding default is exactly what this design exists to prevent.
+
+**Testing it: `python3 scripts/test_gif_wizard.py`** — 51 falsifiers over the pure logic, no rendering, under a second. Every case is PAIRED (one input where a check must fire, one where it must stay quiet) because the first version of `report_verify` read three fields at the wrong type and printed a clean bill of health without having looked at any of them. Proven red-green: reinstating that original logic fails 11 of the 51. `zsh -n` still covers the surface half, and the interview itself has to be driven through a real **pty** — a pipe makes `sys.stdin.isatty()` false, so the wizard silently takes the non-interactive branch and a piped test "passes" without ever asking a question.
+
+Design and measurements: `docs/2026-09-03-gif-bridge-design.md`.
+
 ## The option grammar — the one rule the whole UI rests on
 > bare word = **MODE** (mutually exclusive, pick one) · `--flag` = **combinable** (stacks freely)
 

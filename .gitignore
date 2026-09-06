@@ -14,3 +14,7 @@ local.zsh
 # work not yet done, so they are wrong the moment it ships; they must never enter
 # tracked history. Durable decisions belong in CLAUDE.md, code comments, or memory.
 local/
+
+# Python bytecode from scripts/ (gif_wizard is imported by its own test suite)
+__pycache__/
+*.pyc

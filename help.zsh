@@ -158,10 +158,23 @@ _dior_suggest() {
     # Case 2: right group, but the subcommand doesn't exist (missing or
     # misspelled). Walks DIOR_MENU_ORDER (not a raw key sort) so this list reads
     # in the same workflow order as the menu, not alphabetically.
-    if [ "$group" = "bot" ]; then
-        for k in "${DIOR_MENU_ORDER[@]}"; do
-            [ "${k%% *}" = "$group" ] && matches+=("${k#* }")
-        done
+    #
+    # Derived from DIOR_MENU_ORDER rather than gated on a hardcoded "bot", 2026-09-03 15:49 EDT.
+    # The literal was the same defect the comment above _dior_show_help describes
+    # fixing on the HELP side and never fixed here: `dior legal`, `dior text`,
+    # `dior docs` and `dior emoji` all fell past this branch to the generic "isn't a
+    # recognized dior command" plus the entire menu, when the useful answer -- their
+    # own subcommand list -- was one array scan away. Adding a fifth group made it
+    # visible; it was wrong for the other four already.
+    #
+    # The space test is load-bearing: a SINGLE-word entry like "changelog" has
+    # ${k%% *} == ${k#* } == "changelog", so without it a bare `dior changelog nope`
+    # that reached here would answer itself with "Valid 'changelog' subcommands:
+    # changelog". Only two-word entries name a real group.
+    for k in "${DIOR_MENU_ORDER[@]}"; do
+        [[ "$k" == *" "* ]] && [ "${k%% *}" = "$group" ] && matches+=("${k#* }")
+    done
+    if [ ${#matches} -gt 0 ]; then
         if [ -n "$name" ]; then
             echo "${DIOR_C_ERROR}⚠️  '$group $name' isn't a command${DIOR_C_RESET}"
         else

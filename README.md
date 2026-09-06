@@ -11,6 +11,9 @@ dior bot vm        <deploy|restart>
 dior bot check     [status|baseline] [--peaks] [--logs [N]] [--all]
 dior legal         <deploy|check|build|open> [-y]
 dior text unwrap   <file> [--out <dir>|--in-place]
+dior gif clean     <file...> [--to <preset>] [--out <dir>] [--yes] [--no-preview]
+dior gif check     <file...> [--why]
+dior gif presets
 dior docs audit
 dior emoji check
 dior changelog     [--out <file>] [--dry-run]
@@ -75,12 +78,25 @@ machine.
 | `bot.zsh` | `bot dev` / `bot commit` / `bot vm` / `bot check` |
 | `legal.zsh` | `legal deploy` / `legal check` / `legal build` / `legal open` — the Cloudflare-hosted Terms & Privacy site |
 | `text.zsh` | `text unwrap` — rejoin LLM-style hard-wrapped lines back into flowing paragraphs |
+| `gif.zsh` | `gif clean` / `gif check` / `gif presets` — the front end for the gif-background-remover skill |
 | `checks.zsh` | `docs audit` / `emoji check` — thin wrappers around Diors-Builds' own verification scripts |
 | `release.zsh` | `changelog` (git-cliff draft) / `bump` (syncs package.json + package-lock.json) |
 | `branches.zsh` | `branches` — list/find/prune local branches whose remote is gone |
 | `workspace.zsh` | `doctor` / `notes` / `repo` / `cd` — environment health, navigation, the notes scratchpad |
 | `update.zsh` | `update` (topgrade) / `update self` (pulls this repo) |
 | `scripts/` | dev utilities that aren't part of the CLI — see below |
+
+## `dior gif`
+
+A front end for the [gif-background-remover](https://github.com/HarkiratMangat) skill, which lives in its own repo (`DIOR_GIF_DIR` in `core.zsh`) and is also uploaded standalone to claude.ai. `gif.zsh` owns the surface; `scripts/gif_wizard.py` owns the engine — the same split as `text unwrap` and its Node script.
+
+The skill exposes 64 flags, but that is not the friction it looks like: its own `--auto` already picks them. What `--auto` will not do is guess at two questions — whether an enclosed hole in the artwork is design or background, and whether a soft fade is deliberate — and it reports them as prose naming hex colours and bounding boxes. Measured over 304 real assets, that fires on 12.8% of them.
+
+So this is an interview rather than a flag surface. The wizard reads those questions out of `--recommend`'s JSON before anything runs, opens a picture of the disputed area in Preview, asks in plain English, then calls `--auto` with the answers already supplied so it never refuses. The skill itself is untouched — its JSON is already a machine-readable question API.
+
+Run `python3 scripts/test_gif_wizard.py` after any change to the wizard — 51 paired falsifiers over its pure logic, no rendering, under a second.
+
+`--to` is the size/format vocabulary (`dior gif presets`), and it is the only way a size limit is ever applied. There is deliberately no preset that infers one from the look of a file: the skill's own docs record a guessed target as its worst measured failure, because a guessed number produces a real file at a real size and nothing downstream says it was invented. A large result is named and offered, never acted on.
 
 ## Colors
 

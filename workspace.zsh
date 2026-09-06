@@ -62,6 +62,25 @@ _dior_doctor() {
         _doctor_warn "wrangler not resolvable via npx -- needed for 'dior legal deploy'"
     fi
 
+    # --- the gif skill (dior gif) ---
+    # Checks the same two things gif_wizard.py needs and nothing else: the script it
+    # shells out to, and Pillow. Reports the SYNCED bundle separately rather than as a
+    # pass -- the fallback works, but a session that thinks it is driving the dev repo
+    # while it is really driving the live copy is exactly the confusion worth naming.
+    local gif_script="$DIOR_GIF_DIR/scripts/remove_gif_background.py"
+    if [ -f "$gif_script" ]; then
+        _doctor_ok "gif skill found in the dev repo ($DIOR_GIF_DIR)"
+    elif [ -n "$(print -rl -- ${~HOME}/Library/Application\ Support/Claude/local-agent-mode-sessions/skills-plugin/*/*/skills/gif-background-remover/scripts/remove_gif_background.py(N) 2>/dev/null)" ]; then
+        _doctor_warn "gif skill dev repo missing -- 'dior gif' will fall back to the synced claude.ai copy"
+    else
+        _doctor_warn "gif skill not found -- set DIOR_GIF_DIR in core.zsh (needed for 'dior gif')"
+    fi
+    if command -v python3 >/dev/null 2>&1 && python3 -c "import PIL" >/dev/null 2>&1; then
+        _doctor_ok "python3 + Pillow available (gif previews)"
+    else
+        _doctor_warn "python3/Pillow missing -- needed for 'dior gif'"
+    fi
+
     # --- gh (branches, PRs) ---
     if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
         _doctor_ok "gh authenticated"
