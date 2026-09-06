@@ -325,7 +325,7 @@ export function verify(before, after) {
 function main() {
   const [, , inputPath, outputPath] = process.argv;
   if (!inputPath || !outputPath) {
-    process.stderr.write("Usage: node reflow-prose.mjs <input-file>|- <output-file>\n");
+    process.stderr.write("Usage: node reflow-prose.mjs <input-file>|- <output-file>|-\n");
     process.exit(2);
   }
 
@@ -345,13 +345,23 @@ function main() {
     process.exit(1);
   }
 
-  fs.writeFileSync(outputPath, output, "utf8");
-
   const inputLines = input.split("\n").length;
   const outputLines = output.split("\n").length;
-  // Machine-readable summary line, parsed by _dior_text_unwrap -- keep this
+  const changed = input === output ? "0" : "1";
+
+  if (outputPath === "-") {
+    // Payload on stdout, nothing else -- so `dior reflow - | pbcopy` (or any
+    // other pipe) gets exactly the reflowed text, byte for byte. The summary
+    // goes to stderr instead of interleaving with it.
+    process.stdout.write(output);
+    process.stderr.write(`${inputLines} ${outputLines} ${changed}\n`);
+    return;
+  }
+
+  fs.writeFileSync(outputPath, output, "utf8");
+  // Machine-readable summary line, parsed by dior's _dior_reflow -- keep this
   // format stable (space-separated: inputLines outputLines changed).
-  process.stdout.write(`${inputLines} ${outputLines} ${input === output ? "0" : "1"}\n`);
+  process.stdout.write(`${inputLines} ${outputLines} ${changed}\n`);
 }
 
 main();

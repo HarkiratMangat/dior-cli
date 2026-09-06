@@ -10,7 +10,8 @@ dior bot commit    ['<Title>' ['<Body>']]
 dior bot vm        <deploy|restart>
 dior bot check     [status|baseline] [--peaks] [--logs [N]] [--all]
 dior legal         <deploy|check|build|open> [-y]
-dior text unwrap   <file> [--out <dir>|--in-place]
+dior reflow file   <path> [--out <dir>|--overwrite] [--copy]
+dior reflow text   [--out <dir>] [--copy] [--stdin]
 dior gif clean     <file...> [--to <preset>] [--out <dir>] [--yes] [--no-preview]
 dior gif check     <file...> [--why]
 dior gif presets
@@ -77,7 +78,7 @@ machine.
 | `help.zsh` | menu rendering, guide lookup, the suggester, tab-completion |
 | `bot.zsh` | `bot dev` / `bot commit` / `bot vm` / `bot check` |
 | `legal.zsh` | `legal deploy` / `legal check` / `legal build` / `legal open` — the Cloudflare-hosted Terms & Privacy site |
-| `text.zsh` | `text unwrap` — rejoin LLM-style hard-wrapped lines back into flowing paragraphs |
+| `reflow.zsh` | `reflow file` / `reflow text` — rejoin LLM-style hard-wrapped lines back into flowing paragraphs, from a file on disk or straight from the clipboard |
 | `gif.zsh` | `gif clean` / `gif check` / `gif presets` — the front end for the gif-background-remover skill |
 | `checks.zsh` | `docs audit` / `emoji check` — thin wrappers around Diors-Builds' own verification scripts |
 | `release.zsh` | `changelog` (git-cliff draft) / `bump` (syncs package.json + package-lock.json) |
@@ -88,7 +89,7 @@ machine.
 
 ## `dior gif`
 
-A front end for the [gif-background-remover](https://github.com/HarkiratMangat) skill, which lives in its own repo (`DIOR_GIF_DIR` in `core.zsh`) and is also uploaded standalone to claude.ai. `gif.zsh` owns the surface; `scripts/gif_wizard.py` owns the engine — the same split as `text unwrap` and its Node script.
+A front end for the [gif-background-remover](https://github.com/HarkiratMangat) skill, which lives in its own repo (`DIOR_GIF_DIR` in `core.zsh`) and is also uploaded standalone to claude.ai. `gif.zsh` owns the surface; `scripts/gif_wizard.py` owns the engine — the same split as `reflow` and its Node script.
 
 The skill exposes 64 flags, but that is not the friction it looks like: its own `--auto` already picks them. What `--auto` will not do is guess at two questions — whether an enclosed hole in the artwork is design or background, and whether a soft fade is deliberate — and it reports them as prose naming hex colours and bounding boxes. Measured over 304 real assets, that fires on 12.8% of them.
 
